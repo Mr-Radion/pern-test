@@ -16,12 +16,12 @@ class ApiError extends Error {
   }
 
   // 5.. ошибки это проблемы на сервере
-  static internal() {
+  static internal(message) {
     return new ApiError(500, message);
   }
 
   // если доступа нету
-  static forbidden() {
+  static forbidden(message) {
     return new ApiError(403, message);
   }
 }
