@@ -14,6 +14,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.resolve(__dirname, 'static')));
+// чтобы задать лимит на размеры файлов https://www.npmjs.com/package/express-fileupload
 app.use(fileUpload({}));
 // Внимание!!! очередность регистрации имеет большое значение
 // Если fileUpload зарегистрировать позже, чем роутер, то невозможна будет отправка файлов и form-data

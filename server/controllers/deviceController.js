@@ -1,5 +1,6 @@
 const uuid = require('uuid');
 const path = require('path');
+const fs = require('fs');
 const { Device, DeviceInfo } = require('../model/models');
 const ApiError = require('../error/ApiError');
 
@@ -7,13 +8,16 @@ class DeviceController {
   async create(req, res, next) {
     try {
       let { name, price, brandId, typeId, info } = req.body;
+      if (!req.files || Object.keys(req.files).length === 0) {
+        return res.status(400).json('No files were uploaded.');
+      }
       const { img } = req.files;
       let fileName = uuid.v4() + '.jpg';
-      // перемещение файла с заданным именем в нужную папку
-      img.mv(path.resolve(__dirname, '..', 'static', fileName)); // __dirname - путь до текущей папки
       // raiting мы не указываем, поскольку по дефолту он равен 0
       const device = await Device.create({ name, price, brandId, typeId, img: fileName });
-
+      // перемещение файла с заданным именем в нужную папку, для этого используется метод из пакета работы с файлами express-fileupload
+      // подробнее https://www.npmjs.com/package/express-fileupload или https://github.com/richardgirges/express-fileupload/tree/master/example
+      img.mv(path.resolve(__dirname, '..', 'static', fileName)); // __dirname - путь до текущей папки
       // реализуем перебор массива с информацией о девайсах
       // когда мы передаем данные через formdata они у нас приходят в форме строки, поэтому надо парсить на фронте в json строкуЮ
       // а на бэке обратно перегонять в javascript объекты с помощью json.parse
@@ -80,13 +84,23 @@ class DeviceController {
   }
 
   async delete(req, res) {
-    console.log(req.params);
-    const device = await Device.destroy({
+    const { id } = req.params;
+    const deviceOne = await Device.findOne({
+      where: { id },
+    });
+    const pathImg = `../server/static/${deviceOne.img}`;
+
+    fs.unlink(pathImg, (err) => {
+      if (err) throw err;
+      console.log(`${pathImg} was deleted`);
+    });
+
+    await Device.destroy({
       where: {
         id: req.params.id,
       },
     });
-    res.json({ device });
+    res.json({ deviceOne });
   }
 }
 
